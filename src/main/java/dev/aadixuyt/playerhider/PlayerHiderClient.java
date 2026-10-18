@@ -52,7 +52,8 @@ public final class PlayerHiderClient implements ClientModInitializer {
             while (toggleKey.wasPressed()) {
                 HIDE_PLAYERS = !HIDE_PLAYERS;
                 if (HIDE_PLAYERS) {
-                    LOCKED_PLAYER = isRecentlyAttacked(client.targetedEntity)
+                    LOCKED_PLAYER = LAST_ATTACKED_PLAYER != null
+                            && System.currentTimeMillis() - LAST_ATTACK_TIME_MS < VISIBLE_WINDOW_MS
                             ? LAST_ATTACKED_PLAYER : null;
                 } else {
                     LOCKED_PLAYER = null;
