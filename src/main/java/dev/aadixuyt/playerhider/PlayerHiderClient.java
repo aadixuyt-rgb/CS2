@@ -18,6 +18,7 @@ public final class PlayerHiderClient implements ClientModInitializer {
     public static volatile boolean HIDE_PLAYERS = false;
     public static volatile UUID LAST_ATTACKED_PLAYER = null;
     public static volatile long LAST_ATTACK_TIME_MS = 0L;
+    public static volatile UUID LOCKED_PLAYER = null;
     public static final long VISIBLE_WINDOW_MS = 5_000L;
     private static KeyBinding toggleKey;
 
@@ -31,7 +32,16 @@ public final class PlayerHiderClient implements ClientModInitializer {
         ));
 
         AttackEntityCallback.EVENT.register((player, world, hand, target, hitResult) -> {
-            if (world.isClient && target instanceof PlayerEntity && target != player) {
+            if (!world.isClient || player != net.minecraft.client.MinecraftClient.getInstance().player) {
+                return ActionResult.PASS;
+            }
+
+            if (HIDE_PLAYERS && target instanceof PlayerEntity && target != player
+                    && (LOCKED_PLAYER == null || !LOCKED_PLAYER.equals(target.getUuid()))) {
+                return ActionResult.FAIL;
+            }
+
+            if (target instanceof PlayerEntity && target != player) {
                 LAST_ATTACKED_PLAYER = target.getUuid();
                 LAST_ATTACK_TIME_MS = System.currentTimeMillis();
             }
@@ -41,11 +51,17 @@ public final class PlayerHiderClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggleKey.wasPressed()) {
                 HIDE_PLAYERS = !HIDE_PLAYERS;
+                if (HIDE_PLAYERS) {
+                    LOCKED_PLAYER = isRecentlyAttacked(client.targetedEntity)
+                            ? LAST_ATTACKED_PLAYER : null;
+                } else {
+                    LOCKED_PLAYER = null;
+                }
                 if (client.player != null) {
-                    client.player.sendMessage(
-                            Text.literal("Player Hider: " + (HIDE_PLAYERS ? "ON" : "OFF")),
-                            true
-                    );
+                    String status = HIDE_PLAYERS
+                            ? (LOCKED_PLAYER == null ? "ON (hit a player within 5s first)" : "ON")
+                            : "OFF";
+                    client.player.sendMessage(Text.literal("Player Hider: " + status), true);
                 }
             }
         });
@@ -56,5 +72,11 @@ public final class PlayerHiderClient implements ClientModInitializer {
                 && LAST_ATTACKED_PLAYER != null
                 && LAST_ATTACKED_PLAYER.equals(entity.getUuid())
                 && System.currentTimeMillis() - LAST_ATTACK_TIME_MS < VISIBLE_WINDOW_MS;
+    }
+
+    public static boolean isLockedPlayer(Entity entity) {
+        return entity instanceof PlayerEntity
+                && LOCKED_PLAYER != null
+                && LOCKED_PLAYER.equals(entity.getUuid());
     }
 }
