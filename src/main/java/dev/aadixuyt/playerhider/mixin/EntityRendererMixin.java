@@ -28,7 +28,7 @@ public abstract class EntityRendererMixin {
         if (PlayerHiderClient.HIDE_PLAYERS
                 && entity instanceof PlayerEntity
                 && entity != client.player
-                && !PlayerHiderClient.isRecentlyAttacked(entity)) {
+                && !PlayerHiderClient.isLockedPlayer(entity)) {
             ci.cancel();
         }
     }
