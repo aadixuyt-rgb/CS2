@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "playerhider",
+  "version": "${version}",
+  "name": "Player Hider",
+  "description": "Toggle hiding other player models, with a 5-second visibility window for the last attacked player.",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.aadixuyt.playerhider.PlayerHiderClient"] },
+  "mixins": ["playerhider.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
